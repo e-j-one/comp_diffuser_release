@@ -37,10 +37,19 @@ def ogb_load_env_kwargs(e_name_og, **kwargs): ## env_only
 
 def ogb_get_dataset(env,):
     '''env: an ogbench env'''
-    from ogbench.utils import ogb_load_dataset
-    ## just return the trainset
-    return ogb_load_dataset(env)
+    # from ogbench.utils import ogb_load_dataset
+    # ## just return the trainset
+    # return ogb_load_dataset(env)
 
+    ## use upstream ogbench's load_dataset instead of the fork-only ogb_load_dataset
+    import os
+    from ogbench.utils import load_dataset
+    ## dset_h5path: a smaller dataset for debugging, see OgB_SeqDataset_V2
+    path = getattr(env, 'dset_h5path', None) or \
+        os.path.expanduser(f'~/.ogbench/data/{env.name}.npz')
+    utils.print_color(f'[ogb_get_dataset] {path=}')
+    ## just return the trainset
+    return load_dataset(path, ob_dtype=np.float32, action_dtype=np.float32, compact_dataset=False)
 
 
 
