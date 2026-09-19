@@ -173,6 +173,17 @@ base = {
         ## loading
         'diffusion_loadpath': 'f:diffusion/H{horizon}_T{n_diffusion_steps}',
         'diffusion_epoch': 'latest',
+
+        ## ---- evaluation, following the OGBench protocol ----
+        ## see plan_ogb_stgl_sml.py; episode length is set by the env TimeLimit
+        'ev_protocol': 'ogbench',
+        'ev_n_comp': 6,
+        'ev_cp_infer_t_type': 'interleave',
+        'n_act_per_waypnt': 1,
+        'is_replan': 'ada_dist',
+        'repl_ada_dist_cfg': dict(max_n_repl=0, thres=1, type='m_2', ada_dist_minus_n_wp=0, cond_2_extra=150),
+        'inv_model_path': None,
+        'inv_epoch': 'latest',
     },
 
 }

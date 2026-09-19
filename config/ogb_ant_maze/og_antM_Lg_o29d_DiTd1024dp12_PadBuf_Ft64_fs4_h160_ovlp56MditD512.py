@@ -140,7 +140,7 @@ base = {
         'gradient_accumulate_every': 1,
         'ema_decay': 0.9999,
         'save_freq': 4000,
-        'sample_freq': 8000,
+        'sample_freq': 0,
         'n_saves': 5,
 
         'n_reference': 20,
@@ -172,6 +172,17 @@ base = {
         ## loading
         'diffusion_loadpath': 'f:diffusion/H{horizon}_T{n_diffusion_steps}',
         'diffusion_epoch': 'latest',
+
+        ## ---- evaluation, following the OGBench protocol ----
+        ## see plan_ogb_stgl_sml.py; episode length is set by the env TimeLimit
+        'ev_protocol': 'ogbench',
+        'ev_n_comp': 5,
+        'ev_cp_infer_t_type': 'interleave',
+        'n_act_per_waypnt': 1,
+        'is_replan': 'ada_dist',
+        'repl_ada_dist_cfg': dict(max_n_repl=10, thres=4, type='m_2', ada_dist_minus_n_wp=50, cond_2_extra=150, used_idxs=(0,1)),
+        'inv_model_path': 'logs/antmaze-large-stitch-v0/diffusion/og_antM_Lg_o29d_g29d_invdyn_h12',
+        'inv_epoch': 'latest',
     },
 
 }

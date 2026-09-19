@@ -52,7 +52,7 @@ ovlp_model_config = dict(
 
 
 base = {
-    'dataset': "pointmaze-medium-stitch-v0",
+    'dataset': "pointmaze-large-navigate-v0",
 
     'diffusion': {
         'config_fn': '',
@@ -116,7 +116,7 @@ base = {
         'preprocess_fns': [],
         'clip_denoised': True,
         'use_padding': True,
-        'max_path_length': 300,
+        'max_path_length': 1000,
         'dataset_config': dict(
             obs_select_dim=(0,1), ####
             dset_type='ogb',
@@ -141,7 +141,7 @@ base = {
         'gradient_accumulate_every': 1,
         'ema_decay': 0.995,
         'save_freq': 4000,
-        'sample_freq': 8000,
+        'sample_freq': 0,
         'n_saves': 5,
 
         'n_reference': 40,
@@ -177,7 +177,7 @@ base = {
         ## ---- evaluation, following the OGBench protocol ----
         ## see plan_ogb_stgl_sml.py; episode length is set by the env TimeLimit
         'ev_protocol': 'ogbench',
-        'ev_n_comp': 3,
+        'ev_n_comp': 6,
         'ev_cp_infer_t_type': 'interleave',
         'n_act_per_waypnt': 1,
         'is_replan': 'ada_dist',

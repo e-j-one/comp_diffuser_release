@@ -34,25 +34,32 @@ plan_args_to_watch = [
 sm_horizon = 160
 len_ovlap = 56
 tot_horizon = sm_horizon
-time_dim = 96
 
-ovlp_o_dim = 256
+ovlp_o_dim = 512
 ovlp_model_config = dict(
     c_traj_hzn=len_ovlap,
-    in_dim=2,
-    base_dim=32, ## for cnn1d base
-    dim_mults=(1, 2, 3, 4), ## 
-    time_dim=32, ## time embedding
+    in_dim=29,
     out_dim=ovlp_o_dim,
-    tjti_enc_config=dict(t_seq_encoder_type='mlp',
-                         cnn_out_dim=128, 
-                         final_mlp_dims=[1280, 512, ovlp_o_dim],
-                         f_conv_ks=3,)
+    hidden_size=ovlp_o_dim,
+    depth=8, num_heads=8, mlp_ratio=4.0,
+    tjti_enc_config=dict(
+        frame_stack=4, w_init_type='no',),
 )
+
+di_tr_model_config=dict(
+    hidden_size=1024, depth=12, num_heads=16, mlp_ratio=4.0,
+    ovlp_model_type='dit_enc',
+    st_ovlp_model_config=ovlp_model_config, end_ovlp_model_config=ovlp_model_config,
+    inpaint_token_dim=48, ##
+    inpaint_token_type='const',
+    # inpaint_token_type='learn_if_inpt',
+    t_cond_type='add',
+    frame_stack=4,
+    )
 
 
 base = {
-    'dataset': "pointmaze-medium-stitch-v0",
+    'dataset': "antmaze-medium-stitch-v0",
 
     'diffusion': {
         'config_fn': '',
@@ -62,25 +69,10 @@ base = {
 
 
         ##
-        ## cnn model
-        'model': 'models.cd_stgl_sml_dfu.stgl_sml_diffusion_v1.Unet1D_TjTi_Stgl_Cond_V1',
-        'base_dim': 128,
-        'dim_mults': (1, 2, 4, 8),
-        'time_dim': time_dim,
-        'network_config': dict(t_seq_encoder_type='mlp',
-                               cat_t_w=True, 
-                               resblock_ksize=5,
-                               st_ovlp_model_config=ovlp_model_config,
-                               end_ovlp_model_config=ovlp_model_config,
-                               ext_cond_dim=2*ovlp_o_dim,
-                                energy_mode=False,
-                                time_mlp_config=3,
-                                ###
-                                inpaint_token_dim=32,
-                                inpaint_token_type='const',
+        'model': 'ogb_task.og_models.stgl_sml_dit_1d.DiT1D_TjTi_Stgl_Cond_V1',
+        'network_config': di_tr_model_config,
 
-                               ),
-        
+
         ## sm dfu model
         'dfu_model': 'models.cd_stgl_sml_dfu.stgl_sml_diffusion_v1.Stgl_Sml_GauDiffusion_InvDyn_V1',
         'n_diffusion_steps': 512,
@@ -102,9 +94,16 @@ base = {
                             tr_no_ovlp_none=False,
                             ),
         
-        
         'trainer_cls': 'ogb_task.ogb_maze_v1.OgB_Stgl_Sml_Trainer_v1',
-        'trainer_dict': dict(),
+        'step_start_ema': 0,
+        'update_ema_every': 1,
+        'trainer_dict': dict(
+            optim_type='adamw',
+            weight_decay=0,
+            ##
+            # do_train_resume=True,
+            # path_resume='', ## set it to a path of a checkpoint (a .pt file)
+        ),
 
 
         'renderer': 'guides.Maze2dRenderer_V2',
@@ -118,7 +117,7 @@ base = {
         'use_padding': True,
         'max_path_length': 300,
         'dataset_config': dict(
-            obs_select_dim=(0,1), ####
+            obs_select_dim=tuple(range(29)), ####
             dset_type='ogb',
             ###
             pad_option_2='buf',
@@ -137,14 +136,14 @@ base = {
         'n_train_steps': 2e6,
 
         'batch_size': 128,
-        'learning_rate': 2e-4,
+        'learning_rate': 1e-4,
         'gradient_accumulate_every': 1,
-        'ema_decay': 0.995,
+        'ema_decay': 0.9999,
         'save_freq': 4000,
-        'sample_freq': 8000,
+        'sample_freq': 0,
         'n_saves': 5,
 
-        'n_reference': 40,
+        'n_reference': 20,
         'n_samples': 10,
 
         'device': 'cuda',
@@ -158,7 +157,7 @@ base = {
 
         ## diffusion model
         'horizon': tot_horizon,
-        'n_diffusion_steps': 1000,
+        'n_diffusion_steps': 512,
         'normalizer': 'LimitsNormalizer',
 
         ## serialization
@@ -181,8 +180,8 @@ base = {
         'ev_cp_infer_t_type': 'interleave',
         'n_act_per_waypnt': 1,
         'is_replan': 'ada_dist',
-        'repl_ada_dist_cfg': dict(max_n_repl=0, thres=1, type='m_2', ada_dist_minus_n_wp=0, cond_2_extra=150),
-        'inv_model_path': None,
+        'repl_ada_dist_cfg': dict(max_n_repl=10, thres=4, type='m_2', ada_dist_minus_n_wp=50, cond_2_extra=150, used_idxs=(0,1)),
+        'inv_model_path': 'logs/antmaze-medium-stitch-v0/diffusion/og_antM_Me_o29d_g29d_invdyn_h12_dm5',
         'inv_epoch': 'latest',
     },
 
