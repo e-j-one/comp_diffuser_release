@@ -59,6 +59,31 @@ config="config/ogb_pnt_maze/og_pntM_Gi_o2d_Cd_Stgl_PadBuf_Ft64_ts512.py"
 
 
 
+## ------ High-dim planners on navigate / explore / stitch (OGBench-protocol eval) ------
+## AntMaze Stitch 29D
+# config="config/ogb_ant_maze/og_antM_Me_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze/og_antM_Gi_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
+## AntMaze Navigate 29D
+# config="config/ogb_ant_maze_nav/og_antMnav_Me_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze_nav/og_antMnav_Lg_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze_nav/og_antMnav_Gi_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+## AntMaze Explore 29D
+# config="config/ogb_ant_maze_expl/og_antMexpl_Me_o29d_DiTd1024dp12_fs6_h192_ovlp66MditD512.py"
+# config="config/ogb_ant_maze_expl/og_antMexpl_Lg_o29d_DiTd1024dp12_fs6_h192_ovlp66MditD512.py"
+## HumanoidMaze Stitch 69D
+# config="config/ogb_hum_maze/og_humM_Me_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze/og_humM_Lg_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze/og_humM_Gi_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+## HumanoidMaze Navigate 69D
+# config="config/ogb_hum_maze_nav/og_humMnav_Me_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze_nav/og_humMnav_Lg_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze_nav/og_humMnav_Gi_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+## PointMaze Navigate 2D
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Me_o2d_Cd_Stgl_Ft64_ts512.py"
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Lg_o2d_Cd_Stgl_Ft64_ts512.py"
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Gi_o2d_Cd_Stgl_Ft64_ts512.py"
+
+
 {
 
 PYTHONDONTWRITEBYTECODE=1 \

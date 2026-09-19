@@ -6,6 +6,17 @@ from diffuser.datasets.normalization import DatasetNormalizer, LimitsNormalizer
 from diffuser.datasets.ogb_dset import *
 
 
+_train_dset_normalizers = {}
+
+def load_train_dataset_normalizer(args_train):
+    '''rebuild the training dataset from its saved config and return its normalizer (slow, cached)'''
+    loadpath = (args_train.logbase, args_train.dataset, args_train.exp_name)
+    if loadpath not in _train_dset_normalizers:
+        dataset = load_config(*loadpath, 'dataset_config.pkl')()
+        _train_dset_normalizers[loadpath] = (dataset.normalizer, dataset.env.observation_space.shape[0])
+    return _train_dset_normalizers[loadpath]
+
+
 def load_ogb_maze_datasetNormalizer(args_train, obs_dim_idxs=None):
     '''
     Directly create a normalizer with given value, so no need to load the dataset, which is slow.
@@ -78,7 +89,13 @@ def load_ogb_maze_datasetNormalizer(args_train, obs_dim_idxs=None):
         d_obs_mm = OgB_AntMaze_Giant_Navigate_Obs__Min_Max
         d_act_mm = OgB_AntMaze_Giant_Act__Min_Max
     else:
-        assert False, 'to be implemented'
+        ## no hard-coded constants: reuse the normalizer fitted on the training dataset,
+        ## which is only valid when the planner uses the full observation
+        d_norm, n_full = load_train_dataset_normalizer(args_train) ## n_full: env obs dim
+        obs_select_dim = tuple(args_train.dataset_config['obs_select_dim'])
+        assert obs_select_dim == tuple(range(n_full)), f'{obs_select_dim=} {n_full=}'
+        assert obs_dim_idxs in [None, 'full']
+        return d_norm
 
     if obs_dim_idxs is None:
         obs_select_dim = args_train.dataset_config['obs_select_dim']

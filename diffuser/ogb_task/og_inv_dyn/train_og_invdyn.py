@@ -1,6 +1,7 @@
 import sys, os; sys.path.append('./')
-os.environ['PYOPENGL_PLATFORM'] = 'osmesa'
-os.environ['MUJOCO_GL'] = 'osmesa'
+## egl (GPU) works on headless machines without OSMesa; can be overridden by env vars
+os.environ.setdefault('MUJOCO_GL', 'egl')
+os.environ.setdefault('PYOPENGL_PLATFORM', os.environ['MUJOCO_GL'])
 import diffuser.utils as utils
 import pdb
 import torch, wandb

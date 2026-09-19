@@ -24,15 +24,15 @@ source activate compdfu_ogb_release
 ## optionally 'cd' to 'comp_diffuser_release' folder
 # cd $Your_Folder_of_This_Repo
 
-config="config/og_antM_Gi_o2d_luotest.py"
+# config="config/og_antM_Gi_o2d_luotest.py"
 # config="config/ogb_ant_maze/og_antM_Lg_o2d_Cd_Stgl_PadBuf_Ft64_ts512_resume.py"
 # config="config/ogb_ant_maze/og_antM_Me_o2d_Cd_Stgl_PadBuf_Ft64_ts512_resume.py"
 
 ## --------- Training: OGBench AntMaze Stitch, High Dimension Planner ----------
 ## Large 15D
-config="config/ogb_ant_maze/og_antM_Lg_o15d_PadBuf_Ft64_ts512_DiTd768dp16_fs4_h160_ovlp56Mdit.py"
+# config="config/ogb_ant_maze/og_antM_Lg_o15d_PadBuf_Ft64_ts512_DiTd768dp16_fs4_h160_ovlp56Mdit.py"
 ## Large 29D
-# config="config/ogb_ant_maze/og_antM_Lg_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
+config="config/ogb_ant_maze/og_antM_Lg_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
 
 
 ## --------- Training: OGBench AntMaze Stitch 2D Planner ----------
@@ -60,6 +60,31 @@ config="config/ogb_ant_maze/og_antM_Lg_o15d_PadBuf_Ft64_ts512_DiTd768dp16_fs4_h1
 ## --------- Training: OGBench AntSoccer Stitch 2D Planner ----------
 # config="config/ogb_ant_soc/og_antSoc_Ar_o17d_DiTd768_PadBuf_Ft64_ts512_fs4_h160_ovlp56MditD384.py"
 # cobfig="config/ogb_ant_soc/og_antSoc_Me_o17d_DiTd768_PadBuf_Ft64_MaxOriPlen200_ts512_fs4_h160_ovlp56MditD384.py"
+
+## ------ High-dim planners on navigate / explore / stitch (OGBench-protocol eval) ------
+## AntMaze Stitch 29D
+# config="config/ogb_ant_maze/og_antM_Me_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze/og_antM_Gi_o29d_DiTd1024dp12_PadBuf_Ft64_fs4_h160_ovlp56MditD512.py"
+## AntMaze Navigate 29D
+# config="config/ogb_ant_maze_nav/og_antMnav_Me_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze_nav/og_antMnav_Lg_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+# config="config/ogb_ant_maze_nav/og_antMnav_Gi_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py"
+## AntMaze Explore 29D
+# config="config/ogb_ant_maze_expl/og_antMexpl_Me_o29d_DiTd1024dp12_fs6_h192_ovlp66MditD512.py"
+# config="config/ogb_ant_maze_expl/og_antMexpl_Lg_o29d_DiTd1024dp12_fs6_h192_ovlp66MditD512.py"
+## HumanoidMaze Stitch 69D
+# config="config/ogb_hum_maze/og_humM_Me_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze/og_humM_Lg_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze/og_humM_Gi_o69d_DiTd1024dp12_PadBuf_Ft64_fs4_h336_ovlp128MditD512.py"
+## HumanoidMaze Navigate 69D
+# config="config/ogb_hum_maze_nav/og_humMnav_Me_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze_nav/og_humMnav_Lg_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+# config="config/ogb_hum_maze_nav/og_humMnav_Gi_o69d_DiTd1024dp12_fs4_h336_ovlp128MditD512.py"
+## PointMaze Navigate 2D
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Me_o2d_Cd_Stgl_Ft64_ts512.py"
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Lg_o2d_Cd_Stgl_Ft64_ts512.py"
+# config="config/ogb_pnt_maze_nav/og_pntMnav_Gi_o2d_Cd_Stgl_Ft64_ts512.py"
+
 
 {
 

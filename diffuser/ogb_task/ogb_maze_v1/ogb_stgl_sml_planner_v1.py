@@ -48,6 +48,16 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
         if self.plan_n_ep == 100:
             assert self.ep_st_idx == 0
 
+        ## 'ogbench': follow the original OGBench evaluation protocol, i.e.,
+        ## env.reset(task_id) for 5 tasks x n episodes, env TimeLimit, final-step success.
+        ## None: use the pre-collected CompDiffuser evaluation problems.
+        self.ev_protocol = getattr(self.args, 'ev_protocol', None)
+        assert self.ev_protocol in [None, 'ogbench']
+        if self.ev_protocol == 'ogbench':
+            assert self.ep_st_idx == 0
+            ## plan_n_ep is the number of episodes per task, ogbench default is 50
+            self.n_ep_per_task = 50 if self.plan_n_ep == -100 else self.plan_n_ep
+
         self.vis_trajs_per_img = 10
         self.score_low_limit = 100
         # np.set_printoptions(precision=3, suppress=True)
@@ -193,7 +203,8 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
             self.env = ogb_load_env_kwargs(self.args.dataset, 
                                            height=self.rd_resol, width=self.rd_resol)
             
-            self.env.set_seed_addn(0) ## So st/gl are the same across different runs
+            if self.ev_protocol is None:
+                self.env.set_seed_addn(0) ## So st/gl are the same across different runs
         else:
             raise NotImplementedError
         utils.print_color(f'[setup_load] {self.env.max_episode_steps=}')
@@ -205,7 +216,10 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
         utils.mkdir(self.savepath)
         self.savepath_root = self.savepath
         ## We use pre-sampled problems so can do parallel planning
-        self.load_ev_problems()
+        if self.ev_protocol is None:
+            self.load_ev_problems()
+        else:
+            self.problems_h5path = None ## problems are sampled by env.reset
 
 
     def load_inv_model(self):
@@ -388,6 +402,8 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
             utils.set_seed(pl_seed) ## seed everything
         if given_probs is not None: # if given, just evaluate the given states
             num_ep = len(given_probs)
+        elif self.ev_protocol == 'ogbench':
+            num_ep = self.env.num_tasks * self.n_ep_per_task ## task-major order
         else:
             num_probs = len(self.problems_dict['start_state'])
             num_ep = num_probs if self.plan_n_ep == -100 else self.plan_n_ep
@@ -414,60 +430,71 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
         for i_ep in range(self.ep_st_idx, self.ep_st_idx+num_ep):
             
             is_suc = False
-            if given_probs is not None: ## set to given value
-                raise NotImplementedError
+            if self.ev_protocol == 'ogbench':
+                ## identical to ogbench/impls/utils/evaluation.py: the env samples a noisy
+                ## start/goal of the given task, the goal is the full goal observation.
+                task_id = i_ep // self.n_ep_per_task + 1
+                st_state, info = self.env.reset(options=dict(task_id=task_id))
+                gl_pos = info['goal']
+                self.check_obs_dim(gl_pos, 'obs')
+                st_state_mj = self.env.get_ob()
+                target_mj = self.env.cur_goal_xy
+                assert np.isclose(st_state_mj, st_state).all()
             else:
-                ## 2d, (n_probs, 4/29/69) --> 1d, (4/29/69,) ogb obs dim
-                st_state = self.problems_dict['start_state'][i_ep,]
-                gl_pos = self.problems_dict['goal_pos'][i_ep]
+                if given_probs is not None: ## set to given value
+                    raise NotImplementedError
+                else:
+                    ## 2d, (n_probs, 4/29/69) --> 1d, (4/29/69,) ogb obs dim
+                    st_state = self.problems_dict['start_state'][i_ep,]
+                    gl_pos = self.problems_dict['goal_pos'][i_ep]
 
-            self.check_obs_dim(gl_pos, 'full') ## sanity check
+                self.check_obs_dim(gl_pos, 'full') ## sanity check
 
-            ## ------------- Reset the Env -----------------
-            # pdb.set_trace() ## check current state
-            # self.save_env_cur_img(sv_idx=1) ## commented out
+                ## ------------- Reset the Env -----------------
+                # pdb.set_trace() ## check current state
+                # self.save_env_cur_img(sv_idx=1) ## commented out
 
-            ## put the agent to the start state
-            self.env.reset() ## reset dynamics changed by last rollout
-            if 'antmaze' in self.env.name:
-                self.env.set_state_with_obs(st_state)
-            elif 'humanoidmaze' in self.env.name:
-                self.env.set_state_with_full(st_state)
-            elif 'antsoccer' in self.env.name: 
-                ## set the 42D start state, both ant and ball are set
-                self.env.set_state_with_obs(st_state)
-            elif 'pointmaze' in self.env.name:
-                # pdb.set_trace()
-                self.env.set_xy_with_0vel(xy=st_state)
-            else: 
-                raise NotImplementedError
+                ## put the agent to the start state
+                self.env.reset() ## reset dynamics changed by last rollout
+                if 'antmaze' in self.env.name:
+                    self.env.set_state_with_obs(st_state)
+                elif 'humanoidmaze' in self.env.name:
+                    self.env.set_state_with_full(st_state)
+                elif 'antsoccer' in self.env.name: 
+                    ## set the 42D start state, both ant and ball are set
+                    self.env.set_state_with_obs(st_state)
+                elif 'pointmaze' in self.env.name:
+                    # pdb.set_trace()
+                    self.env.set_xy_with_0vel(xy=st_state)
+                else: 
+                    raise NotImplementedError
             
-            # pdb.set_trace() ##
+                # pdb.set_trace() ##
 
-            if 'antsoccer' in self.env.name:
-                self.env.set_goal(goal_xy=gl_pos[(15,16),]) ## gl_pos of the ball
-                self.env.set_ball_start_marker( st_state[(15,16),] )
-            else:
-                self.env.set_goal(goal_xy=gl_pos[:2]) ## gl_pos is in mj xy coordinate
+                if 'antsoccer' in self.env.name:
+                    self.env.set_goal(goal_xy=gl_pos[(15,16),]) ## gl_pos of the ball
+                    self.env.set_ball_start_marker( st_state[(15,16),] )
+                else:
+                    self.env.set_goal(goal_xy=gl_pos[:2]) ## gl_pos is in mj xy coordinate
 
-            mujoco.mj_forward(self.env.model, self.env.data)
+                mujoco.mj_forward(self.env.model, self.env.data)
 
-            # self.save_env_cur_img(sv_idx=2)
+                # self.save_env_cur_img(sv_idx=2)
 
-            ## get the value from env after setting
-            st_state_mj = self.env.get_ob()
-            target_mj = self.env.cur_goal_xy
+                ## get the value from env after setting
+                st_state_mj = self.env.get_ob()
+                target_mj = self.env.cur_goal_xy
             
-            # pdb.set_trace() ## sanity check
+                # pdb.set_trace() ## sanity check
 
-            if 'antmaze' in self.env.name:
-                assert np.isclose(st_state_mj, st_state).all()
-            elif 'antsoccer' in self.env.name:
-                assert np.isclose(st_state_mj, st_state).all()
-            elif 'pointmaze' in self.env.name:
-                assert np.isclose(st_state_mj, st_state).all()
-            else:
-                assert np.isclose(self.env.get_state_full(), st_state).all()
+                if 'antmaze' in self.env.name:
+                    assert np.isclose(st_state_mj, st_state).all()
+                elif 'antsoccer' in self.env.name:
+                    assert np.isclose(st_state_mj, st_state).all()
+                elif 'pointmaze' in self.env.name:
+                    assert np.isclose(st_state_mj, st_state).all()
+                else:
+                    assert np.isclose(self.env.get_state_full(), st_state).all()
 
             self.env.set_start_marker( st_state_mj[:2] )
 
@@ -550,11 +577,18 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
 
             
             cnt_extras = 0 ## extra steps after suc
+            if self.ev_protocol == 'ogbench':
+                is_rec_video = i_ep % self.n_ep_per_task == 0
+            else:
+                is_rec_video = True
             total_reward = 0 ## accumulate reward of one episode
 
             
             ## Set Num of Env Steps
-            if self.is_replan == 'ada_dist':
+            if self.ev_protocol == 'ogbench':
+                ## max_episode_steps of the gymnasium TimeLimit, e.g., 1000 for antmaze
+                self.n_max_steps = self.env.max_episode_steps
+            elif self.is_replan == 'ada_dist':
                 self.n_max_steps = self.repl_ada_dist_cfg['n_max_steps']
             else:
                 self.n_max_steps = tot_hzn * self.n_act_per_waypnt + self.extra_env_steps
@@ -786,7 +820,10 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
 
                 obs_cur, rew, terminated, truncated, info = self.env.step(act_pred)
 
-                is_suc = bool(info['success']) or is_suc ## sparse reward
+                if self.ev_protocol == 'ogbench':
+                    is_suc = bool(info['success']) ## success at the final step
+                else:
+                    is_suc = bool(info['success']) or is_suc ## sparse reward
 
                 total_reward += rew
                 score = 0 # not used
@@ -803,12 +840,18 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
 
                 ## update rollout observations
                 rollout.append( self.env.get_qpos_qvel() )
-                imgs_rout.append(self.env.render())
+                if is_rec_video:
+                    imgs_rout.append(self.env.render())
                 if self.is_rd_agv:
                     imgs_rout_agv.append( self.render_agv_img() )
                     
 
-                if is_suc: ## early termination
+                if self.ev_protocol == 'ogbench':
+                    ## the episode ends at the goal (terminate_at_goal=True) or by the TimeLimit
+                    if terminated or truncated:
+                        utils.print_color(f'{i_ep=} {i_et=} {is_suc=}')
+                        break
+                elif is_suc: ## early termination
                     utils.print_color(f'{i_ep=} {i_et=} {is_suc=}')
                     cnt_extras += 1
                     if cnt_extras == 30:
@@ -848,7 +891,8 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
 
             ## save the interaction video
             tmp_dir_path = self.get_sample_savedir(i_ep)
-            utils.save_imgs_to_mp4(imgs=imgs_rout, 
+            if is_rec_video:
+                utils.save_imgs_to_mp4(imgs=imgs_rout, 
                         save_path=f'{tmp_dir_path}/ep{i_ep}_{is_suc}.mp4', fps=self.vid_fps, n_repeat_first=10)
             if self.is_rd_agv and is_suc:
                 utils.save_imgs_to_mp4(imgs=imgs_rout_agv, 
@@ -881,6 +925,7 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
             ep_scores.append(score)
             ep_total_rewards.append( total_reward )
             ep_cnt_repls.append(cnt_repl)
+            ep_cnt_env_steps.append(i_et + 1)
 
             ## --- save multiple trajs in one large image ---
             if len(ep_pred_obss) % trajs_per_img == 0 or i_ep == num_ep - 1:
@@ -978,6 +1023,16 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
             ('pl_seed', pl_seed),
             # ('', ),
         ])
+        if self.ev_protocol == 'ogbench':
+            ## per-task success rate, overall is the mean over tasks, same as ogbench/impls/main.py
+            task_suc = ep_is_suc.reshape(self.env.num_tasks, self.n_ep_per_task).mean(axis=1)
+            json_data.update([
+                ('ev_protocol', self.ev_protocol),
+                ('n_ep_per_task', self.n_ep_per_task),
+                ('overall_success', task_suc.mean().item()),
+            ])
+            json_data.update([(f'task{i+1}_success', v.item()) for i, v in enumerate(task_suc)])
+            utils.print_color(f'[ogbench protocol] {task_suc=} overall: {task_suc.mean():.4f}')
         json_data = self.update_j_data(json_data)
         json_data.update([
             ('p_type', 'plan_once'),
@@ -989,6 +1044,7 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
             ##
             ('ep_is_suc', ep_is_suc.tolist()),
             ('ep_cnt_repls', ep_cnt_repls), ## already list
+            ('ep_cnt_env_steps', ep_cnt_env_steps),
             ('ep_scores', dict(zip(ep_range, ep_scores)) ),
             ('ep_total_rewards', dict(zip(ep_range, ep_total_rewards)) ),
             ('ncp_pred_time_list', self.policy.ncp_pred_time_list),

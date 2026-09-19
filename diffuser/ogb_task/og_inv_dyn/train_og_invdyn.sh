@@ -25,18 +25,36 @@ source activate compdfu_ogb_release
 
 ## ------------ AntMaze Explore ------------
 ## AntMaze Medium Explore
-# config="config/maze_og/og_inv/og_antMexpl_Me_o29d_g2d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antMexpl_Me_o29d_g2d_invdyn_h12.py"
 
 ## AntMaze Large Explore
-# config="config/maze_og/og_inv_Jan1/og_antMexpl_Lg_o29d_g2d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antMexpl_Lg_o29d_g2d_invdyn_h12.py"
 
 ## -----------------------------------------
 
 
 ## humanoid
-# config="config/maze_og/og_inv_Jan4/og_humM_Gi_o69d_g2d_invdyn_h80_dm5_dout02.py"
-# config="config/maze_og/og_inv_Jan4/og_humM_Lg_o69d_g2d_invdyn_h80_dm5_dout02.py"
-# config="config/maze_og/og_inv_Jan4/og_humM_Me_o69d_g2d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Gi_o69d_g2d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Lg_o69d_g2d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Me_o69d_g2d_invdyn_h80_dm5_dout02.py"
+
+
+## ---- Full-state goal (29D ant / 69D humanoid) for the high-dim planners, one per dataset ----
+## AntMaze Navigate
+# config="config/ogb_invdyn/og_inv_ant/og_antMnav_Me_o29d_g29d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antMnav_Lg_o29d_g29d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antMnav_Gi_o29d_g29d_invdyn_h12.py"
+## AntMaze Explore
+# config="config/ogb_invdyn/og_inv_ant/og_antMexpl_Me_o29d_g29d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antMexpl_Lg_o29d_g29d_invdyn_h12.py"
+## HumanoidMaze Stitch
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Me_o69d_g69d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Lg_o69d_g69d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humM_Gi_o69d_g69d_invdyn_h80_dm5_dout02.py"
+## HumanoidMaze Navigate
+# config="config/ogb_invdyn/og_inv_hum/og_humMnav_Me_o69d_g69d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humMnav_Lg_o69d_g69d_invdyn_h80_dm5_dout02.py"
+# config="config/ogb_invdyn/og_inv_hum/og_humMnav_Gi_o69d_g69d_invdyn_h80_dm5_dout02.py"
 
 
 ## ------------ AntSoccer Arena ------------
@@ -69,9 +87,9 @@ config="config/ogb_invdyn/og_inv_ant/og_antM_Gi_o29d_g2d_invdyn_h12.py" ## for 2
 
 ## Medium
 ## ant maze medium stitch
-# config="config/maze_og/og_inv_Jan1/og_antM_Me_o29d_g2d_invdyn_h12.py"
-# config="config/maze_og/og_inv_Jan6/og_antM_Me_o29d_g15d_invdyn_h12.py"
-# config="config/maze_og/og_inv_Jan1/og_antM_Me_o29d_g29d_invdyn_h12_dm5.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antM_Me_o29d_g2d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antM_Me_o29d_g15d_invdyn_h12.py"
+# config="config/ogb_invdyn/og_inv_ant/og_antM_Me_o29d_g29d_invdyn_h12_dm5.py"
 
 
 

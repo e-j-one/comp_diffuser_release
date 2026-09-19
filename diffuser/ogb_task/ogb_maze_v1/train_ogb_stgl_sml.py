@@ -1,5 +1,5 @@
 import os,sys,pdb,socket; sys.path.append('./')
-if socket.gethostname() == 'bishop':
+if True or socket.gethostname() == 'bishop':
     os.environ['PYOPENGL_PLATFORM'] = 'egl'
     os.environ['MUJOCO_GL'] = 'egl'
 else:

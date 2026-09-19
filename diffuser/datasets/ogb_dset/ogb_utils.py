@@ -1,6 +1,7 @@
 import diffuser.utils as utils
 import numpy as np
 import collections, pdb
+from diffuser.datasets.ogb_dset.ogb_compat import patch_env
 
 ## ---------- Dec 21, For OGBench ---------------
 def ogb_load_env(e_name_og,): ## env_only
@@ -16,7 +17,7 @@ def ogb_load_env(e_name_og,): ## env_only
     env = wrapped_env.unwrapped
     env.max_episode_steps = wrapped_env._max_episode_steps
     env.name = e_name_og
-    return env
+    return patch_env(env) ## add the helpers of the ogbench fork if missing
 
 ## ---------- Jan 20, For paper vis, change resolution ------------
 def ogb_load_env_kwargs(e_name_og, **kwargs): ## env_only
@@ -32,7 +33,7 @@ def ogb_load_env_kwargs(e_name_og, **kwargs): ## env_only
     env = wrapped_env.unwrapped
     env.max_episode_steps = wrapped_env._max_episode_steps
     env.name = e_name_og
-    return env
+    return patch_env(env) ## add the helpers of the ogbench fork if missing
 
 
 def ogb_get_dataset(env,):

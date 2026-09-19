@@ -71,6 +71,14 @@ if __name__ == '__main__':
     ### --- Hyper-parameters Setup ---
     from diffuser.datasets.d4rl import Is_OgB_Robot_Env
     assert Is_OgB_Robot_Env
+
+    ## eval hyper-parameters given in the 'plan' dict of the config (OGBench protocol);
+    ## read them out before they are overwritten by the defaults below
+    ev_protocol = getattr(args, 'ev_protocol', None)
+    if ev_protocol == 'ogbench':
+        ev_cfg_keys = ['ev_n_comp', 'ev_cp_infer_t_type', 'n_act_per_waypnt', 'is_replan', 
+                       'repl_ada_dist_cfg', 'inv_model_path', 'inv_epoch']
+        ev_cfg = {k: copy.deepcopy(getattr(args, k)) for k in ev_cfg_keys}
     
     
 
@@ -85,8 +93,22 @@ if __name__ == '__main__':
 
 
     ## ---------------------------------------
+    ## ------ Follow OGBench Evaluation ------
+    if ev_protocol == 'ogbench':
+        for k, v in ev_cfg.items():
+            setattr(args, k, v)
+        repl_wp_cfg = {}
+        ## the episode length is given by the env TimeLimit (e.g., 1000 for antmaze), 
+        ## not by the config; see ogbench/locomaze/__init__.py
+        import gymnasium, ogbench
+        tmp_splits = args.dataset.split('-')
+        tmp_env_id = '-'.join(tmp_splits[:-2] + tmp_splits[-1:])
+        args.repl_ada_dist_cfg['n_max_steps'] = gymnasium.spec(tmp_env_id).max_episode_steps
+        utils.print_color(f'[ogbench protocol] {tmp_env_id=} {args.repl_ada_dist_cfg=}', c='c')
+
+    ## ---------------------------------------
     ## ----------- Ant Maze Stitch -----------
-    if 'antmaze' in args.dataset.lower() and 'stitch' in  args.dataset.lower():
+    elif 'antmaze' in args.dataset.lower() and 'stitch' in  args.dataset.lower():
         if 'giant' in args.dataset:
 
             ## Ant Maze Giant
@@ -753,6 +775,8 @@ if __name__ == '__main__':
         sub_dir += f'-st{args.ep_st_idx}'
     if args.is_rd_agv:
         sub_dir += '-agv'
+    if ev_protocol == 'ogbench':
+        sub_dir += '-ogbEv'
 
     args.savepath = osp.join(args.savepath, sub_dir)
 

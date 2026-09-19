@@ -74,7 +74,9 @@ class OgB_InvDyn_SeqDataset_V1(torch.utils.data.Dataset):
         def_pathlen = 500 if 'explore' in env.name else def_pathlen
         def_pathlen = 500 if 'antsoccer-medium' in env.name else def_pathlen
 
-        assert (np.array(self.path_lengths) == def_pathlen).all(), 'ogbench default length'
+        ## navigate datasets have longer episodes (1000-4000), same as OgB_SeqDataset_V2
+        if 'navigate' not in env.name:
+            assert (np.array(self.path_lengths) == def_pathlen).all(), 'ogbench default length'
 
 
         ## check if the norm_const_dict is correct
