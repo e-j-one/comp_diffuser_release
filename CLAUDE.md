@@ -27,7 +27,11 @@ sh ./diffuser/ogb_task/og_inv_dyn/train_og_invdyn.sh 0
 sh ./diffuser/ogb_task/ogb_maze_v1/plan_ogb_stgl_sml.sh 0 10 0
 # Decision Diffuser baseline
 ./diffuser/baselines/dd_ogb/train_dd_ogb.sh ; ./diffuser/baselines/dd_ogb/plan_dd_ogb.sh
+# Full OGBench benchmark of one config  ($1 GPU, $2 n_seeds)
+bash ./diffuser/ogb_task/ogb_maze_v1/run_ogb_benchmark.sh 0 8
 ```
+
+`run_ogb_benchmark.py` (wrapped by the `.sh`) drives the whole protocol for one planner config: for each seed `0..N-1` it trains the planner, trains the inverse-dynamics model named by the config's `inv_model_path` (skipped when that is `None`, i.e. pointmaze), then evaluates the last three checkpoints and prints per-seed and across-seed success, also saved to `<logbase>/<dataset>/00_bench_<config>.json`. Useful flags: `--seeds 0,1,2`, `--n_ep_per_task` (50 = OGBench), `--n_last_ckpt`, `--skip_trained` (resume), `--dry_run`, `--train_extra`/`--plan_extra` (passthrough, e.g. `--train_extra "--n_train_steps 1000000 --n_saves 10"` to keep a checkpoint per 100K steps). It runs the seeds sequentially on one GPU; run several configs in parallel by launching one process per GPU. Note `n_saves` sets the checkpoint *label* spacing (`label_freq = n_train_steps // n_saves`), and files are overwritten within a window, so it decides which "last three checkpoints" exist.
 
 Or call the Python directly: `python diffuser/ogb_task/ogb_maze_v1/train_ogb_stgl_sml.py --config config/<...>.py`. Any extra `--key value` pair overrides a config field. The key must already exist in the config, except `plan_n_ep`, `diffusion_epoch`, and `config_2` (see `Parser.add_extras` in `diffuser/utils/setup.py`).
 

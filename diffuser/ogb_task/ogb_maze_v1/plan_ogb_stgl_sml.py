@@ -98,6 +98,16 @@ if __name__ == '__main__':
         for k, v in ev_cfg.items():
             setattr(args, k, v)
         repl_wp_cfg = {}
+        if args.inv_model_path is not None:
+            ## the config stores it as 'logs/<dataset>/diffusion/<inv cfg>', so a run with
+            ## another --logbase has to be rebased onto it
+            if not args.inv_model_path.startswith(f'{args.logbase}{os.sep}'):
+                args.inv_model_path = osp.join(args.logbase,
+                                               *args.inv_model_path.split(os.sep)[1:])
+            ## a seeded run trains its own inv dyn model, whose exp_name also ends with '_sd{seed}'
+            if args.seed:
+                args.inv_model_path = f'{args.inv_model_path}_sd{args.seed}'
+            utils.print_color(f'[ogbench protocol] {args.inv_model_path=}', c='c')
         ## the episode length is given by the env TimeLimit (e.g., 1000 for antmaze), 
         ## not by the config; see ogbench/locomaze/__init__.py
         import gymnasium, ogbench
