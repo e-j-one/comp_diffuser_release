@@ -148,9 +148,12 @@ def main():
         print(f'[ run_ogb_benchmark ] {seed=} eval checkpoints: {labels}', flush=True)
 
         results[seed] = {}
-        for label in labels:
+        for i_ckpt, label in enumerate(labels):
+            ## a different rollout seed per checkpoint, so the start/goal problems of the
+            ## three evals differ (in ogbench the rng keeps advancing across eval epochs)
+            pl_seed = seed * 100 + i_ckpt
             cmd = [sys.executable, PLAN_PY, '--config', args.config,
-                   '--plan_n_ep', str(args.n_ep_per_task), '--pl_seeds', str(seed),
+                   '--plan_n_ep', str(args.n_ep_per_task), '--pl_seeds', str(pl_seed),
                    '--diffusion_epoch', str(label)] + seed_args + args.plan_extra.split()
             if run(cmd, env, args.dry_run) != 0:
                 print(f'[ run_ogb_benchmark ] eval FAILED, {seed=} {label=}', flush=True)
