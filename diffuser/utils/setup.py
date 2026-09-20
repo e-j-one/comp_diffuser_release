@@ -18,6 +18,7 @@ from .git_utils import (
 import diffuser.utils as utils
 
 def set_seed(seed):
+    print(f"[ utils/setup ] Setting seed: {seed}")
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -50,6 +51,10 @@ def lazy_fstring(template, args):
     return eval(f"f'{template}'")
 
 class Parser(Tap):
+    ## training/eval seed, can be given as '--seed 1' to any entry point;
+    ## a non-zero seed is appended to exp_name (e.g. '..._T512_sd1'),
+    ## so runs of different seeds do not overwrite each other
+    seed: int = 0
 
     def save(self):
         fullpath = os.path.join(self.savepath, 'args.json')
@@ -199,6 +204,9 @@ class Parser(Tap):
         exp_name = getattr(args, 'exp_name')
         if callable(exp_name):
             exp_name_string = exp_name(args)
+            ## seed 0 (default) keeps the original path, so old checkpoints still load
+            if getattr(args, 'seed', 0):
+                exp_name_string = f'{exp_name_string}_sd{args.seed}'
             print(f'[ utils/setup ] Setting exp_name to: {exp_name_string}')
             setattr(args, 'exp_name', exp_name_string)
             self._dict['exp_name'] = exp_name_string

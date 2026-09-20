@@ -35,6 +35,8 @@ Run the scripts with `bash`, not `sh`; dash has no `source`.
 
 The training scripts call `wandb.init(mode='online')` explicitly, which overrides the `WANDB_MODE` env var.
 
+`--seed N` works on every entry point (declared on `utils.Parser`, so it is a real flag, not a config override). It seeds `random`/`numpy`/torch via `Parser.set_seed`, is recorded in `args.json`, and a non-zero seed is appended to the experiment name (`..._T512_sd1`), so seeds do not overwrite each other. Seed 0 is the default and keeps the original paths. Pass the same `--seed` at eval time, since the planner rebuilds the name to find the checkpoints. Runs are comparable but not bit-identical: the dataloader uses 6 workers with `shuffle=True` and no explicit generator, and `cudnn.benchmark` is on. The eval-time rollout seed is separate (`--pl_seeds`).
+
 Quick smoke test: `config/og_antM_Gi_o2d_luotest.py`. Setting `dset_h5path` in a config's `base` dict (e.g. `data/ogb_maze/antmaze-giant-stitch-v0-luotest.npz`) swaps in a tiny dataset subset. It also disables wandb (`mode='disabled'` when `dset_h5path` is set, otherwise online logging to project `comp_diffuser_release`). Remove `dset_h5path` for real runs.
 
 ## Config system
