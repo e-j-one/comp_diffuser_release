@@ -145,7 +145,7 @@ base = {
         'ema_decay': 0.995,
         'save_freq': 4000,
         'sample_freq': 8000,
-        'n_saves': 10,
+        'n_saves': 80,
 
         'n_reference': 40,
         'n_samples': 10,
