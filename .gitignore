@@ -25,7 +25,7 @@ scripts/ogb_stgl_maze/*
 ## ------- Luo New ---------
 scripts/*
 config/resume/*
-!logs/.gitkeep
+# !logs/.gitkeep
 ckpts/*
 src/*
 
