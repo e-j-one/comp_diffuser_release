@@ -83,6 +83,8 @@ pip install -r conda_env/requirements.txt
 ```console
 ## Please set the OGBench path in the script before running this line
 ./conda_env/install_ogb.sh
+## To run original ogbench,
+pip install ogbench "mujoco==3.2.6"
 ```
 
 After these steps, you can use conda env `compdfu_ogb_release` to launch experiments.
