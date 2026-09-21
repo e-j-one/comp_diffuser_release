@@ -1,6 +1,9 @@
 """
 Run the full OGBench benchmark pipeline of one config, for several training seeds.
 
+By default training continues from an existing checkpoint of that seed (--continue_training),
+so the whole pipeline can simply be relaunched after a crash or reboot.
+
 For each seed:
     1. train the CompDiffuser planner
     2. train the inverse dynamics model (skipped for pointmaze, which uses a PD controller)
@@ -89,7 +92,11 @@ def main():
     p.add_argument('--logbase', type=str, default='logs')
     p.add_argument('--train_extra', type=str, default='', help='extra args for both training scripts, e.g. "--n_train_steps 1000000 --n_saves 10"')
     p.add_argument('--plan_extra', type=str, default='', help='extra args for the eval script')
-    p.add_argument('--skip_trained', action='store_true', help='skip training if checkpoints already exist')
+    p.add_argument('--continue_training', action=argparse.BooleanOptionalAction, default=True,
+                   help='continue training from an existing checkpoint of that seed (e.g. after a reboot); '
+                        '--no-continue_training restarts from scratch instead')
+    p.add_argument('--skip_trained', action='store_true',
+                   help='do not train at all when a checkpoint exists (takes precedence over --continue_training)')
     p.add_argument('--dry_run', action='store_true', help='only print the commands')
     args = p.parse_args()
 
@@ -114,13 +121,14 @@ def main():
     results = {} ## seed -> {label: overall_success}
     for seed in seeds:
         seed_args = ['--seed', str(seed), '--logbase', args.logbase]
+        train_args = seed_args + (['--resume', '1'] if args.continue_training else [])
         logdir = osp.join(args.logbase, dataset, 'diffusion', exp_name_of(args.config, base, seed))
 
         ## ---------------- 1. planner ----------------
         if args.skip_trained and ckpt_labels(logdir):
             print(f'[ run_ogb_benchmark ] skip planner training, found ckpt in {logdir}', flush=True)
         else:
-            cmd = [sys.executable, TRAIN_PY, '--config', args.config] + seed_args + args.train_extra.split()
+            cmd = [sys.executable, TRAIN_PY, '--config', args.config] + train_args + args.train_extra.split()
             if run(cmd, env, args.dry_run) != 0:
                 print(f'[ run_ogb_benchmark ] planner training FAILED, {seed=}', flush=True)
                 continue
@@ -133,7 +141,7 @@ def main():
             if args.skip_trained and ckpt_labels(inv_logdir):
                 print(f'[ run_ogb_benchmark ] skip inv dyn training, found ckpt in {inv_logdir}', flush=True)
             else:
-                cmd = [sys.executable, INV_PY, '--config', inv_config] + seed_args + args.train_extra.split()
+                cmd = [sys.executable, INV_PY, '--config', inv_config] + train_args + args.train_extra.split()
                 if run(cmd, env, args.dry_run) != 0:
                     print(f'[ run_ogb_benchmark ] inv dyn training FAILED, {seed=}', flush=True)
                     continue

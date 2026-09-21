@@ -55,6 +55,9 @@ class Parser(Tap):
     ## a non-zero seed is appended to exp_name (e.g. '..._T512_sd1'),
     ## so runs of different seeds do not overwrite each other
     seed: int = 0
+    ## '--resume 1': continue training from the latest checkpoint in the savepath,
+    ## e.g. after a crash/reboot. No effect if there is no checkpoint yet.
+    resume: int = 0
 
     def save(self):
         fullpath = os.path.join(self.savepath, 'args.json')

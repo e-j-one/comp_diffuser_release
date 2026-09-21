@@ -4,6 +4,8 @@
 ## train the inverse dynamics model (except pointmaze), then evaluate the last three
 ## checkpoints (5 tasks x 50 episodes each).
 ## usage: bash ./diffuser/ogb_task/ogb_maze_v1/run_ogb_benchmark.sh $gpu $n_seeds
+## training continues from an existing checkpoint of the same seed by default,
+## so this can simply be relaunched after a crash or a reboot
 ## e.g.:  bash ./diffuser/ogb_task/ogb_maze_v1/run_ogb_benchmark.sh 0 8
 
 source ~/.bashrc
@@ -47,7 +49,6 @@ python diffuser/ogb_task/ogb_maze_v1/run_ogb_benchmark.py \
     --gpu ${1:-0} \
     --n_seeds ${2:-8} \
     --train_extra "$train_extra" \
-    --skip_trained \
 
 exit 0
 

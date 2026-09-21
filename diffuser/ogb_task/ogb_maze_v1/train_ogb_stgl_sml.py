@@ -216,6 +216,15 @@ if args.trainer_dict.get('do_train_resume', False): # for a sample resume, shoul
     utils.print_color(f'Resume From: {tmp_path}', c='c')
     trainer.load4resume( tmp_path )
 
+elif args.resume: ## '--resume 1', continue this run, e.g. after a crash/reboot
+    ## NOTE: restores model/ema/step, but not the optimizer state (not saved)
+    tmp_epoch = utils.get_latest_epoch([args.savepath,])
+    if tmp_epoch < 0:
+        utils.print_color(f'[resume] no checkpoint in {args.savepath}, train from scratch', c='y')
+    else:
+        trainer.load(tmp_epoch)
+        utils.print_color(f'[resume] loaded state_{tmp_epoch}.pt, continue from step {trainer.step}', c='c')
+
 # pdb.set_trace()
 #-----------------------------------------------------------------------------#
 #------------------------ test forward & backward pass -----------------------#
@@ -270,9 +279,11 @@ wandb.init(
 #-----------------------------------------------------------------------------#
 # if False: ## ori
 if True: ## ori
-    n_epochs = int(args.n_train_steps // args.n_steps_per_epoch)
-    if args.trainer_dict.get('do_train_resume', False): ## for resume
-        n_epochs = int( (args.n_train_steps - trainer.step)  // args.n_steps_per_epoch)
+    ## trainer.step is 0 unless we resumed, so this covers both cases
+    n_epochs = int( (args.n_train_steps - trainer.step) // args.n_steps_per_epoch )
+    if n_epochs <= 0:
+        utils.print_color(f'[resume] already trained {trainer.step} steps of '
+                          f'{int(args.n_train_steps)}, nothing to do', c='y')
 
     for i in range(n_epochs):
         print(f'Epoch {i} / {n_epochs} | {args.savepath}')
