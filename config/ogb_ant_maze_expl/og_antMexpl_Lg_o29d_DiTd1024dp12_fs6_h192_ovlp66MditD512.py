@@ -129,7 +129,7 @@ base = {
         'loss_type': 'l2_inv_v3',
         'n_train_steps': 1e6, ## ogbench: 1M steps
 
-        'batch_size': 128,
+        'batch_size': 64,
         'learning_rate': 1e-4,
         'gradient_accumulate_every': 1,
         'ema_decay': 0.9999,
