@@ -94,7 +94,7 @@ base = {
         'n_train_steps': 1e6, ## ogbench: 1M steps
 
         'ema_decay': 0.995,
-        'batch_size': 1024,
+        'batch_size': 512,
         'learning_rate': 1e-4,
         'gradient_accumulate_every': 1,
 
