@@ -1,3 +1,4 @@
+import math
 import os,sys,pdb,socket; sys.path.append('./')
 if True or socket.gethostname() == 'bishop':
     os.environ['PYOPENGL_PLATFORM'] = 'egl'
@@ -280,14 +281,17 @@ wandb.init(
 # if False: ## ori
 if True: ## ori
     ## trainer.step is 0 unless we resumed, so this covers both cases
-    n_epochs = int( (args.n_train_steps - trainer.step) // args.n_steps_per_epoch )
-    if n_epochs <= 0:
+    ## train exactly the remaining steps; a resumed step need not be a multiple of
+    ## n_steps_per_epoch, so the last epoch may be shorter
+    n_remain = int(args.n_train_steps - trainer.step)
+    n_epochs = math.ceil(n_remain / args.n_steps_per_epoch)
+    if n_remain <= 0:
         utils.print_color(f'[resume] already trained {trainer.step} steps of '
                           f'{int(args.n_train_steps)}, nothing to do', c='y')
 
     for i in range(n_epochs):
         print(f'Epoch {i} / {n_epochs} | {args.savepath}')
-        trainer.train(n_train_steps=args.n_steps_per_epoch)
+        trainer.train(n_train_steps=min(args.n_steps_per_epoch, int(args.n_train_steps - trainer.step)))
 else: ## modified Dec 23 for faster transformer
     ## will cause error, not Used
     @torch.compile

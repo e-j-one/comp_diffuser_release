@@ -818,6 +818,11 @@ class OgB_Stgl_Sml_MazeEnvPlanner_V1:
 
                 # pdb.set_trace()
 
+                if self.ev_protocol == 'ogbench':
+                    ## same as ogbench/impls/utils/evaluation.py; the point env does not
+                    ## clip itself (qpos += 0.2 * action), so |a| > 1 would move too fast
+                    act_pred = np.clip(act_pred, -1, 1)
+
                 obs_cur, rew, terminated, truncated, info = self.env.step(act_pred)
 
                 if self.ev_protocol == 'ogbench':

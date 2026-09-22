@@ -763,7 +763,11 @@ if __name__ == '__main__':
     # start_e = 5e5; # 2e5 end_e = 
     # depoch_list = np.arange(start_e, int(n_e * 1e5), int(1e5), dtype=np.int32).tolist()
     
-    depoch_list = [latest_e,]
+    ## '--diffusion_epoch <label>' evaluates that checkpoint, e.g. from run_ogb_benchmark.py
+    if args.diffusion_epoch == 'latest':
+        depoch_list = [latest_e,]
+    else:
+        depoch_list = [int(args.diffusion_epoch),]
     ## depoch_list = [800000,] # 1M
     
     if args.is_replan == 'ada_dist':

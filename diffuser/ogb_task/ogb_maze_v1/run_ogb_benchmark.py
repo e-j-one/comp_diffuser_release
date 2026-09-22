@@ -18,7 +18,7 @@ Example:
         --config config/ogb_ant_maze_nav/og_antMnav_Me_o29d_DiTd1024dp12_fs4_h160_ovlp56MditD512.py \
         --n_seeds 8 --gpu 0
 """
-import argparse, glob, importlib.util, json, os, subprocess, sys
+import argparse, glob, importlib.util, json, os, re, subprocess, sys, time
 import os.path as osp
 
 sys.path.append('./')
@@ -70,14 +70,22 @@ def run(cmd, env, dry_run):
     return subprocess.call(cmd, env=env)
 
 
-def newest_result_json(logbase, dataset, seed):
-    '''the 00_rollout.json of the most recent ogbench-protocol eval of this run'''
+def newest_result_json(logbase, dataset, config_path, seed, t_launch):
+    '''
+    the 00_rollout.json of the most recent ogbench-protocol eval of this run, i.e.
+    <logbase>/<dataset>/plans/<prefix>_<config_fn>_H..[_sd<seed>]/<suffix>/<sub_dir>-ogbEv*/,
+    written after t_launch; filtered by config and seed, since other configs of the same
+    dataset may be evaluated in parallel
+    '''
+    config_fn = osp.splitext(osp.basename(config_path))[0]
     pat = osp.join(logbase, dataset, 'plans', '*', '*', '*-ogbEv*', '00_rollout.json')
-    cands = glob.glob(pat)
-    if seed: ## the plan exp_name also carries the seed suffix
-        cands = [c for c in cands if f'_sd{seed}' in c]
-    else:
-        cands = [c for c in cands if '_sd' not in c]
+    cands = []
+    for c in glob.glob(pat):
+        plan_exp = c.split(os.sep)[-4] ## the plan exp_name dir
+        m_sd = re.search(r'_sd(\d+)$', plan_exp)
+        c_seed = int(m_sd.group(1)) if m_sd else 0
+        if f'_{config_fn}_H' in plan_exp and c_seed == seed and osp.getmtime(c) >= t_launch:
+            cands.append(c)
     return max(cands, key=osp.getmtime) if cands else None
 
 
@@ -119,6 +127,7 @@ def main():
     print(f'[ run_ogb_benchmark ] {dataset=} {seeds=} inv_config={inv_config}', flush=True)
 
     results = {} ## seed -> {label: overall_success}
+    incomplete = [] ## seeds whose training did not reach n_train_steps
     for seed in seeds:
         seed_args = ['--seed', str(seed), '--logbase', args.logbase]
         train_args = seed_args + (['--resume', '1'] if args.continue_training else [])
@@ -148,6 +157,15 @@ def main():
 
         ## ---------------- 3. eval the last three checkpoints ----------------
         labels = ckpt_labels(logdir)[-args.n_last_ckpt:]
+        ## a run that stopped early (e.g. with --skip_trained) would otherwise be evaluated
+        ## at the wrong checkpoints without notice
+        if labels and not args.dry_run:
+            with open(osp.join(logdir, 'args.json')) as f:
+                n_train_steps = int(json.load(f)['n_train_steps'])
+            if labels[-1] != n_train_steps or len(labels) < args.n_last_ckpt:
+                print(f'[ run_ogb_benchmark ] WARNING: {seed=} is not fully trained, '
+                      f'checkpoints {labels}, {n_train_steps=}', flush=True)
+                incomplete.append(seed)
         if not labels and args.dry_run:
             labels = ['<label of each of the last 3 ckpts>'] ## nothing trained yet
         if not labels:
@@ -163,12 +181,13 @@ def main():
             cmd = [sys.executable, PLAN_PY, '--config', args.config,
                    '--plan_n_ep', str(args.n_ep_per_task), '--pl_seeds', str(pl_seed),
                    '--diffusion_epoch', str(label)] + seed_args + args.plan_extra.split()
+            t_launch = time.time()
             if run(cmd, env, args.dry_run) != 0:
                 print(f'[ run_ogb_benchmark ] eval FAILED, {seed=} {label=}', flush=True)
                 continue
             if args.dry_run:
                 continue
-            j_path = newest_result_json(args.logbase, dataset, seed)
+            j_path = newest_result_json(args.logbase, dataset, args.config, seed, t_launch)
             if j_path is None:
                 print(f'[ run_ogb_benchmark ] no result json found, {seed=} {label=}', flush=True)
                 continue
@@ -195,13 +214,18 @@ def main():
         mean = sum(vals) / len(vals)
         std = (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5
         print(f'  ---> {mean * 100:.1f}% +- {std * 100:.1f}% over {len(vals)} seeds')
+    ## the reported number is only comparable to ogbench if every seed has all its checkpoints
+    missing = [s for s in seeds if len(results.get(s, {})) < args.n_last_ckpt]
+    if missing or incomplete:
+        print(f'  WARNING: seeds with missing evals {missing}, not fully trained {incomplete}')
     out_path = osp.join(args.logbase, dataset,
                         f'00_bench_{osp.splitext(osp.basename(args.config))[0]}.json')
     if not args.dry_run and results:
         with open(out_path, 'w') as f:
             json.dump(dict(config=args.config, dataset=dataset,
                            n_ep_per_task=args.n_ep_per_task,
-                           per_seed_per_ckpt=results, per_seed=seed_means), f, indent=2)
+                           per_seed_per_ckpt=results, per_seed=seed_means,
+                           missing_seeds=missing, incomplete_seeds=incomplete), f, indent=2)
         print(f'  saved: {out_path}')
     print('=' * 70)
 

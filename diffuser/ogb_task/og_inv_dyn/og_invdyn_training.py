@@ -158,10 +158,6 @@ class OgB_InvDyn_Trainer_v1(object):
             if self.step % self.update_ema_every == 0:
                 self.step_ema()
 
-            if self.step % self.save_freq == 0:
-                label = self.step // self.label_freq * self.label_freq
-                self.save(label)
-
             if self.step % self.log_freq == 0:
                 infos_str = ' | '.join([f'{key}: {val:8.4f}' for key, val in infos.items()])
                 print(f'{self.step}: {loss:8.4f} | {infos_str} | t: {timer():8.4f}')
@@ -185,6 +181,12 @@ class OgB_InvDyn_Trainer_v1(object):
                 self.ema_model.train()
 
             self.step += 1
+
+            ## save after the update, so state_<label>.pt holds the weights of exactly
+            ## <label> steps once that step is reached (ceil, e.g. steps 904K..1M -> state_1000000)
+            if self.step % self.save_freq == 0:
+                label = -(-self.step // self.label_freq) * self.label_freq
+                self.save(label)
 
     def save(self, epoch):
         '''

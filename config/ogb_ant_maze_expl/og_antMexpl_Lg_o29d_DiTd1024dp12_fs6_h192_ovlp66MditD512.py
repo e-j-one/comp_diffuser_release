@@ -127,7 +127,7 @@ base = {
         ## training
         'n_steps_per_epoch': 10000,
         'loss_type': 'l2_inv_v3',
-        'n_train_steps': 2e6,
+        'n_train_steps': 1e6, ## ogbench: 1M steps
 
         'batch_size': 128,
         'learning_rate': 1e-4,
@@ -135,7 +135,7 @@ base = {
         'ema_decay': 0.9999,
         'save_freq': 4000,
         'sample_freq': 0,
-        'n_saves': 40,
+        'n_saves': 10, ## ckpt every 100K, eval the last 3 (800K, 900K, 1M)
 
         'n_reference': 20,
         'n_samples': 10,

@@ -90,7 +90,7 @@ base = {
         ## training
         'n_steps_per_epoch': 10000,
         'loss_type': 'l2_inv_v3',
-        'n_train_steps': 2e6,
+        'n_train_steps': 1e6, ## ogbench: 1M steps
 
         'ema_decay': 0.995,
         'batch_size': 1024,
